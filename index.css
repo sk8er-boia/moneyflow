@@ -1,0 +1,60 @@
+@import "tailwindcss";
+@import "intro.js/introjs.css";
+
+@theme {
+  --font-sans: "Pretendard", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  font-family: 'Pretendard', sans-serif;
+  background-color: #f3f4f6;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* Custom IntroJS styles to match the app theme */
+.introjs-tooltip {
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.introjs-tooltiptext {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #4b5563;
+}
+
+.introjs-tooltipbuttons {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 1rem;
+}
+
+.introjs-button {
+  border-radius: 0.75rem;
+  padding: 0.5rem 1rem;
+  font-weight: 700;
+  text-shadow: none;
+  transition: all 0.2s;
+}
+
+.introjs-nextbutton {
+  background-color: #4338ca !important;
+  color: white !important;
+  border: none !important;
+}
+
+.introjs-prevbutton {
+  background-color: #f3f4f6 !important;
+  color: #4b5563 !important;
+  border: none !important;
+}
+
+.introjs-skipbutton {
+  color: #9ca3af !important;
+}
+
+.introjs-bullets ul li a.active {
+  background: #4338ca;
+}
