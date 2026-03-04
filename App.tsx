@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   ChevronLeft, ChevronRight, Wallet, TrendingUp, TrendingDown, 
-  Sparkles, Loader2, History, Settings, HelpCircle, Home
+  Sparkles, Loader2, History, Settings, HelpCircle, Home, Key
 } from 'lucide-react';
 import introJs from 'intro.js';
 import { Transaction, MonthlyStats, EXPENSE_CATEGORIES, INCOME_CATEGORIES, BudgetMap, InvestmentRecord, RecurringExpense, BackupData, DEFAULT_BROKERS } from './types';
@@ -21,6 +21,7 @@ import { ConfirmDialog } from './components/ui/ConfirmDialog';
 import { InstallGuide } from './components/InstallGuide';
 import { LandingPage } from './components/LandingPage';
 import { LegalModals } from './components/LegalModals';
+import { ApiKeyModal } from './components/ui/ApiKeyModal';
 import { analyzeFinancialData } from './services/geminiService';
 
 const App = () => {
@@ -94,6 +95,10 @@ const App = () => {
     return !localStorage.getItem('moneyflow_onboarded');
   });
   const [activeLegalModal, setActiveLegalModal] = useState<'terms' | 'privacy' | 'contact' | null>(null);
+  
+  // API Key State
+  const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('moneyflow_gemini_api_key') || '');
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
 
   // --- Persistence Hooks ---
   useEffect(() => {
@@ -216,6 +221,11 @@ const App = () => {
   };
 
   const handleAnalyze = async () => {
+    if (!apiKey) {
+      setIsApiKeyModalOpen(true);
+      return;
+    }
+
     const yearTransactions = transactions.filter(t => t.date && new Date(t.date).getFullYear() === currentDate.getFullYear());
     if (yearTransactions.length === 0) {
       showToast('분석할 데이터가 부족합니다.', 'error');
@@ -223,7 +233,7 @@ const App = () => {
     }
     setIsAnalyzing(true);
     setShowAnalysis(true);
-    const result = await analyzeFinancialData(yearTransactions, `${currentDate.getFullYear()}년 ${currentDate.getMonth() + 1}월`);
+    const result = await analyzeFinancialData(yearTransactions, `${currentDate.getFullYear()}년 ${currentDate.getMonth() + 1}월`, apiKey);
     setAiAnalysis(result);
     setIsAnalyzing(false);
   };
@@ -335,6 +345,19 @@ const App = () => {
     setTimeout(startTour, 500);
   };
 
+  const handleManageApiKey = async () => {
+    const aistudio = (window as any).aistudio;
+    if (aistudio) {
+      await aistudio.openSelectKey();
+    }
+  };
+
+  const handleSaveApiKey = (newKey: string) => {
+    setApiKey(newKey);
+    localStorage.setItem('moneyflow_gemini_api_key', newKey);
+    showToast('API 키가 저장되었습니다. 이제 AI 기능을 사용할 수 있습니다.');
+  };
+
   if (showLanding) {
     return <LandingPage onStart={handleStartApp} onOpenLegal={setActiveLegalModal} />;
   }
@@ -355,13 +378,16 @@ const App = () => {
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-3 justify-center">
-            <button onClick={() => setShowLanding(true)} className="flex items-center gap-2 bg-white/5 hover:bg-white/15 px-4 py-2 rounded-xl text-xs font-bold border border-white/10 transition-all"><Home size={16} />처음으로</button>
-            <button onClick={startTour} className="flex items-center gap-2 bg-white/5 hover:bg-white/15 px-4 py-2 rounded-xl text-xs font-bold border border-white/10 transition-all"><HelpCircle size={16} />도움말</button>
-            <button onClick={() => setIsHistoryOpen(true)} className="flex items-center gap-2 bg-white/5 hover:bg-white/15 px-4 py-2 rounded-xl text-xs font-bold border border-white/10 transition-all"><History size={16} />기록 조회</button>
-            <button onClick={() => setIsDataModalOpen(true)} className="flex items-center gap-2 bg-white/5 hover:bg-white/15 px-4 py-2 rounded-xl text-xs font-bold border border-white/10 transition-all"><Settings size={16} />백업/복구</button>
-            <button id="ai-analyze-btn" onClick={handleAnalyze} className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 px-5 py-2 rounded-xl text-xs font-black shadow-lg shadow-indigo-500/30 transition-all active:scale-95">
-              {isAnalyzing ? <Loader2 className="animate-spin" size={16} /> : <Sparkles size={16} className="text-yellow-300" />}AI 분석
+          <div className="flex flex-wrap gap-2 justify-center">
+            <button onClick={() => setShowLanding(true)} className="flex items-center gap-1.5 bg-white/5 hover:bg-white/15 px-3 py-2 rounded-xl text-xs font-bold border border-white/10 transition-all"><Home size={14} />처음으로</button>
+            <button onClick={startTour} className="flex items-center gap-1.5 bg-white/5 hover:bg-white/15 px-3 py-2 rounded-xl text-xs font-bold border border-white/10 transition-all"><HelpCircle size={14} />도움말</button>
+            <button onClick={() => setIsHistoryOpen(true)} className="flex items-center gap-1.5 bg-white/5 hover:bg-white/15 px-3 py-2 rounded-xl text-xs font-bold border border-white/10 transition-all"><History size={14} />기록 조회</button>
+            <button onClick={() => setIsDataModalOpen(true)} className="flex items-center gap-1.5 bg-white/5 hover:bg-white/15 px-3 py-2 rounded-xl text-xs font-bold border border-white/10 transition-all"><Settings size={14} />백업/복구</button>
+            <button onClick={() => setIsApiKeyModalOpen(true)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all ${apiKey ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' : 'bg-white/5 border-white/10 text-white hover:bg-white/15'}`}>
+              <Key size={14} /> {apiKey ? 'AI 프리미엄 활성' : 'API 키 설정'}
+            </button>
+            <button id="ai-analyze-btn" onClick={handleAnalyze} className="flex items-center gap-1.5 bg-indigo-500 hover:bg-indigo-400 px-4 py-2 rounded-xl text-xs font-black shadow-lg shadow-indigo-500/30 transition-all active:scale-95">
+              {isAnalyzing ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} className="text-yellow-300" />}AI 분석
             </button>
           </div>
         </div>
@@ -382,25 +408,25 @@ const App = () => {
       <main className="max-w-7xl mx-auto w-full px-6 -mt-24 pb-24 space-y-8 relative z-10">
         {/* Statistics Summary */}
         <div id="stats-summary" className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 flex items-center gap-5 hover:translate-y-[-4px] transition-transform">
-            <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl"><TrendingUp size={28} /></div>
+          <div className="bg-white p-8 rounded-[2rem] shadow-2xl border border-gray-100 flex items-center gap-6 hover:translate-y-[-4px] transition-transform">
+            <div className="p-5 bg-blue-50 text-blue-600 rounded-2xl"><TrendingUp size={32} /></div>
             <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase mb-1">총 수입</p>
-              <p className="text-2xl font-black text-gray-900">{stats.totalIncome.toLocaleString()}원</p>
+              <p className="text-lg font-black text-gray-500 uppercase mb-0.5 tracking-tight">총 수입</p>
+              <p className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">{stats.totalIncome.toLocaleString()}<span className="text-sm ml-1 font-bold text-gray-400">원</span></p>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 flex items-center gap-5 hover:translate-y-[-4px] transition-transform">
-            <div className="p-4 bg-red-50 text-red-600 rounded-2xl"><TrendingDown size={28} /></div>
+          <div className="bg-white p-8 rounded-[2rem] shadow-2xl border border-gray-100 flex items-center gap-6 hover:translate-y-[-4px] transition-transform">
+            <div className="p-5 bg-red-50 text-red-600 rounded-2xl"><TrendingDown size={32} /></div>
             <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase mb-1">총 지출</p>
-              <p className="text-2xl font-black text-gray-900">{stats.totalExpense.toLocaleString()}원</p>
+              <p className="text-lg font-black text-gray-500 uppercase mb-0.5 tracking-tight">총 지출</p>
+              <p className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">{stats.totalExpense.toLocaleString()}<span className="text-sm ml-1 font-bold text-gray-400">원</span></p>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 flex items-center gap-5 hover:translate-y-[-4px] transition-transform">
-            <div className={`p-4 rounded-2xl ${stats.balance >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}><Wallet size={28} /></div>
+          <div className="bg-white p-8 rounded-[2rem] shadow-2xl border border-gray-100 flex items-center gap-6 hover:translate-y-[-4px] transition-transform">
+            <div className={`p-5 rounded-2xl ${stats.balance >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}><Wallet size={32} /></div>
             <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase mb-1">현재 잔고</p>
-              <p className={`text-2xl font-black ${stats.balance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>{stats.balance.toLocaleString()}원</p>
+              <p className="text-lg font-black text-gray-500 uppercase mb-0.5 tracking-tight">현재 잔고</p>
+              <p className={`text-2xl md:text-3xl font-black tracking-tight ${stats.balance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>{stats.balance.toLocaleString()}<span className="text-sm ml-1 font-bold text-gray-400">원</span></p>
             </div>
           </div>
         </div>
@@ -446,6 +472,8 @@ const App = () => {
                 currentViewDate={currentDate} 
                 transactions={transactions} 
                 categories={expenseCats} 
+                apiKey={apiKey}
+                onApiKeyRequired={() => setIsApiKeyModalOpen(true)}
              />
 
              <div id="transaction-form-section" className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
@@ -493,6 +521,7 @@ const App = () => {
       <MonthlyHistory isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} transactions={transactions} onSelectMonth={setCurrentDate} />
       <ConfirmDialog isOpen={confirmDialog.isOpen} message={confirmDialog.message} onConfirm={confirmDialog.onConfirm} onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))} />
       <InstallGuide isOpen={isInstallGuideOpen} onClose={() => setIsInstallGuideOpen(false)} deferredPrompt={deferredPrompt} onInstall={() => deferredPrompt?.prompt()} />
+      <ApiKeyModal isOpen={isApiKeyModalOpen} onClose={() => setIsApiKeyModalOpen(false)} onSave={handleSaveApiKey} />
       <LegalModals activeModal={activeLegalModal} onClose={() => setActiveLegalModal(null)} />
       {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
     </div>

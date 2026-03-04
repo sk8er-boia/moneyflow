@@ -14,9 +14,11 @@ interface Props {
   currentViewDate: Date; // Use this to check status against the viewed month
   transactions: Transaction[]; // Required for AI prediction and checking paid status
   categories: string[];
+  apiKey?: string;
+  onApiKeyRequired: () => void;
 }
 
-export const UpcomingBills: React.FC<Props> = ({ expenses, onAdd, onUpdate, onDelete, onPay, currentViewDate, transactions, categories }) => {
+export const UpcomingBills: React.FC<Props> = ({ expenses, onAdd, onUpdate, onDelete, onPay, currentViewDate, transactions, categories, apiKey, onApiKeyRequired }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState('');
   const [newAmount, setNewAmount] = useState('');
@@ -133,6 +135,11 @@ export const UpcomingBills: React.FC<Props> = ({ expenses, onAdd, onUpdate, onDe
   };
 
   const handlePredict = async () => {
+    if (!apiKey) {
+      onApiKeyRequired();
+      return;
+    }
+
     if (transactions.length < 5) {
       setPredictionError("예측 정확도를 위해 최소 5건 이상의 지출 데이터가 필요합니다.");
       setShowPrediction(true);
@@ -144,7 +151,7 @@ export const UpcomingBills: React.FC<Props> = ({ expenses, onAdd, onUpdate, onDe
     setShowPrediction(true);
     
     try {
-      const prediction = await predictNextMonthExpenses(transactions);
+      const prediction = await predictNextMonthExpenses(transactions, apiKey);
       setPredictionResult(prediction);
     } catch (e) {
       setPredictionError("예측을 생성하는 중 문제가 발생했습니다.");

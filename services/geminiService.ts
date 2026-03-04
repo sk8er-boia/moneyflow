@@ -2,14 +2,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Transaction } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 // Helper to group transactions by month
 const getMonthlySummary = (transactions: Transaction[], year: number) => {
   const summary = new Map<number, { income: number; expense: number; topCategory: string }>();
 
   for (let i = 1; i <= 12; i++) {
-    // Fix: Corrected the initialization object structure which had a syntax error.
     summary.set(i, { income: 0, expense: 0, topCategory: '' });
   }
 
@@ -44,8 +41,10 @@ const getMonthlySummary = (transactions: Transaction[], year: number) => {
 
 export const analyzeFinancialData = async (
   transactions: Transaction[],
-  currentDateStr: string 
+  currentDateStr: string,
+  userApiKey?: string
 ): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: userApiKey || process.env.API_KEY });
   const year = parseInt(currentDateStr.split('년')[0]);
   const month = parseInt(currentDateStr.split('년')[1].replace('월', '').trim());
 
@@ -107,8 +106,10 @@ export interface PredictionResult {
 }
 
 export const predictNextMonthExpenses = async (
-  transactions: Transaction[]
+  transactions: Transaction[],
+  userApiKey?: string
 ): Promise<PredictionResult> => {
+  const ai = new GoogleGenAI({ apiKey: userApiKey || process.env.API_KEY });
   if (transactions.length === 0) {
     throw new Error("데이터가 부족합니다.");
   }
