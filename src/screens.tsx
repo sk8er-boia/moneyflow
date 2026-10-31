@@ -3,6 +3,7 @@ import { ChevronRight, Plus, Check, Pencil } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar as RBar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { Transaction, RecurringExpense, BudgetMap, TOTAL_BUDGET, iconFor } from './types';
 import { Card, Empty, Bar, Button, Sheet, Field, MoneyInput, inputCls, Segmented } from './ui';
+import { toss } from './toss';
 import { won, shortWon, sum, byCategory, dateLabel, insights, billStatus, ddayLabel, daysIn, ym } from './lib';
 
 const COLORS = ['#3182f6', '#ff8a3d', '#22c55e', '#a855f7', '#f04452', '#14b8a6', '#facc15', '#64748b', '#ec4899', '#0ea5e9', '#84cc16', '#94a3b8'];
@@ -234,6 +235,7 @@ export const Budget: React.FC<{ monthTxs: Transaction[]; budgets: BudgetMap; set
     const n = Number(val) || 0; const next = { ...budgets };
     if (n > 0) next[edit] = n; else delete next[edit];
     setBudgets(next); setEdit(null);
+    if (n > 0) toss.log('budget_set', { scope: edit === TOTAL_BUDGET ? 'total' : 'category' });
   };
   return (
     <div className="space-y-3">

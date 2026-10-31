@@ -81,6 +81,7 @@ export default function App() {
     const data: BackupData = { app: 'moneyflow', version: 2, transactions: txs, recurringExpenses: bills, budgets, expenseCategories: expCats, incomeCategories: incCats };
     const ok = await toss.saveFile(`머니플로우_백업_${ymd(new Date())}.json`, JSON.stringify(data, null, 2));
     toast(ok ? '백업 파일을 저장했어요' : '저장하지 못했어요');
+    if (ok) toss.log('backup_save');
   };
   const importData = (d: any) => {
     try {
