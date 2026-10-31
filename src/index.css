@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  --color-brand: #3182f6;
+  --color-brand-dark: #1b64da;
+  --color-ink: #191f28;
+  --color-sub: #4e5968;
+  --color-mute: #8b95a1;
+  --color-line: #e5e8eb;
+  --color-bg: #f2f4f6;
+  --color-minus: #f04452;
+  --color-plus: #3182f6;
+}
+
+html, body { background: var(--color-bg); }
+body {
+  color: var(--color-ink);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+  word-break: keep-all;
+}
+input, select, textarea, button { font: inherit; }
+button { cursor: pointer; }
+.num { font-variant-numeric: tabular-nums; }
+.sheet-enter { animation: sheetUp .22s ease-out; }
+.fade-enter { animation: fadeIn .18s ease-out; }
+@keyframes sheetUp { from { transform: translateY(24px); opacity: .6 } to { transform: none; opacity: 1 } }
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
