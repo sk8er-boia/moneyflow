@@ -27,7 +27,10 @@ export default function ossLicenses() {
         const files = fs.readdirSync(dir).filter(f => LICENSE_FILE.test(f)).sort();
         const text = files.map(f => fs.readFileSync(path.join(dir, f), 'utf8').trim()).join('\n\n');
         const license = typeof pj.license === 'string' ? pj.license : pj.license?.type || 'UNKNOWN';
-        seen.set(`${pj.name}@${pj.version}`, { name: pj.name, version: pj.version, license, text });
+        // 패키지에 라이선스 파일이 없으면 표준 라이선스 전문(scripts/licenses/<ID>.txt)으로 채워요.
+        let full = text;
+        if (!full) { try { full = `${license} License — ${pj.name}\n\n` + fs.readFileSync(new URL(`./licenses/${license}.txt`, import.meta.url), 'utf8').trim(); } catch { full = ''; } }
+        seen.set(`${pj.name}@${pj.version}`, { name: pj.name, version: pj.version, license, text: full });
       }
       const list = [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
       this.emitFile({ type: 'asset', fileName: 'licenses.json', source: JSON.stringify(list) });
