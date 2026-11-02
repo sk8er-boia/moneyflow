@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { ChevronRight, X, Plus } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ChevronRight, ChevronDown, X, Plus } from 'lucide-react';
 import { Sheet, Segmented, Button, inputCls, Confirm } from './ui';
 import { iconFor } from './types';
 
@@ -32,8 +32,41 @@ export const CategoryEditor: React.FC<{
   );
 };
 
-type Doc = 'terms' | 'privacy' | 'contact' | null;
+type Doc = 'terms' | 'privacy' | 'contact' | 'oss' | null;
 export const CONTACT_EMAIL = 'mash_melow@naver.com';
+export const COPYRIGHT = '© 2026 루시. All rights reserved.';
+
+// 빌드할 때 만든 licenses.json(실제로 앱에 들어간 오픈소스 목록)을 보여 줘요.
+type Lic = { name: string; version: string; license: string; text: string };
+const Licenses: React.FC = () => {
+  const [list, setList] = useState<Lic[] | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
+  useEffect(() => { fetch('./licenses.json').then(r => r.json()).then(setList).catch(() => setList([])); }, []);
+  return (
+    <>
+      <p>머니플로우 가계부는 아래 오픈소스 소프트웨어를 사용해요. 항목을 누르면 라이선스 전문을 볼 수 있어요.</p>
+      <div>
+        {list === null ? <p className="text-center text-mute py-6">불러오는 중…</p>
+          : !list.length ? <p className="text-center text-mute py-6">목록을 불러오지 못했어요.</p>
+          : list.map(l => {
+            const id = `${l.name}@${l.version}`, on = open === id;
+            return (
+              <div key={id} className="border-b border-line/70 last:border-0">
+                <button onClick={() => setOpen(on ? null : id)} aria-expanded={on} className="w-full flex items-center gap-2 py-3 text-left">
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-[15px] font-semibold text-ink truncate">{l.name}</span>
+                    <span className="block text-[12.5px] text-mute">{l.version} · {l.license}</span>
+                  </span>
+                  <ChevronDown size={18} className={`text-mute transition-transform ${on ? 'rotate-180' : ''}`} />
+                </button>
+                {on && <pre className="mb-3 p-3 bg-bg rounded-2xl text-[11.5px] leading-relaxed whitespace-pre-wrap break-words">{l.text || `${l.license} License`}</pre>}
+              </div>
+            );
+          })}
+      </div>
+    </>
+  );
+};
 
 export const SettingsSheet: React.FC<{
   open: boolean; onClose: () => void; onEditCats: () => void; onExport: () => void; onImport: (data: unknown) => void; onReset: () => void; count: number;
@@ -65,9 +98,11 @@ export const SettingsSheet: React.FC<{
         <Row label="이용약관" onClick={() => setDoc('terms')} />
         <Row label="개인정보 처리방침" onClick={() => setDoc('privacy')} />
         <Row label="문의하기" onClick={() => setDoc('contact')} />
-        <p className="text-[12px] text-mute text-center mt-4 mb-2">머니플로우 가계부 v1.0 · 모든 기록은 이 기기에만 저장돼요</p>
+        <Row label="오픈소스 라이선스" onClick={() => setDoc('oss')} />
+        <p className="text-[12px] text-mute text-center mt-4">머니플로우 가계부 v1.0 · 모든 기록은 이 기기에만 저장돼요</p>
+        <p className="text-[12px] text-mute text-center mt-1 mb-2">{COPYRIGHT}</p>
       </Sheet>
-      <Sheet open={open && !!doc} onClose={() => setDoc(null)} title={doc === 'terms' ? '이용약관' : doc === 'privacy' ? '개인정보 처리방침' : '문의하기'}>
+      <Sheet open={open && !!doc} onClose={() => setDoc(null)} title={doc === 'terms' ? '이용약관' : doc === 'privacy' ? '개인정보 처리방침' : doc === 'oss' ? '오픈소스 라이선스' : '문의하기'}>
         <div className="text-[14.5px] text-sub leading-relaxed space-y-4 pb-4">
           {doc === 'terms' && <>
             <p><b className="text-ink">제1조 (목적)</b><br />이 약관은 머니플로우 가계부(이하 "서비스")의 이용 조건과 절차를 정해요.</p>
@@ -82,6 +117,7 @@ export const SettingsSheet: React.FC<{
             <p><b className="text-ink">4. 삭제</b><br />설정의 '모든 데이터 지우기'로 언제든 모든 기록을 지울 수 있어요.</p>
             <p><b className="text-ink">5. 문의</b><br />{CONTACT_EMAIL}</p>
           </>}
+          {doc === 'oss' && <Licenses />}
           {doc === 'contact' && <>
             <p>이용 중 불편한 점이나 바라는 기능이 있다면 메일로 알려 주세요.</p>
             <a href={`mailto:${CONTACT_EMAIL}`} className="block text-center bg-bg rounded-2xl py-4 text-[16px] font-semibold text-brand">{CONTACT_EMAIL}</a>
