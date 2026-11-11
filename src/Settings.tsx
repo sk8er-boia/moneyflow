@@ -33,7 +33,7 @@ export const CategoryEditor: React.FC<{
 };
 
 type Doc = 'terms' | 'privacy' | 'contact' | 'oss' | null;
-export const CONTACT_EMAIL = 'mash_melow@naver.com';
+export const CONTACT_EMAIL = 'mash_mellow@naver.com';
 export const COPYRIGHT = '© 2026 루시. All rights reserved.';
 
 // 빌드할 때 만든 licenses.json(실제로 앱에 들어간 오픈소스 목록)을 보여 줘요.
